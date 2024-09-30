@@ -4,8 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="10415f2d-19d1-4ae5-ac37-237057bd6891" name="변경" comment="data set">
-      <change afterPath="$PROJECT_DIR$/1.py" afterDir="false" />
+    <list default="true" id="9dc4cc11-0e31-4240-9b89-fd915f72a041" name="변경" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/Bigdata.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/1.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -20,29 +27,15 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_BRANCH_BY_REPOSITORY">
-      <map>
-        <entry key="$PROJECT_DIR$" value="main" />
-      </map>
-    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;pkpjs&quot;
-  }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/pkpjs/Bigdata.git&quot;,
-    &quot;accountId&quot;: &quot;e7c26b72-75eb-4a4c-9e95-f9f22509d348&quot;
-  }
-}</component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 7
-}</component>
-  <component name="ProjectId" id="2mjzQW6cramtFWyEbCYkOY2Bab2" />
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 6
+}]]></component>
+  <component name="ProjectId" id="2moQ2V48iH9egpuYzrWZQqfcbWb" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -50,47 +43,28 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Python.1.executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "pkpjs",
-    "last_opened_file_path": "C:/Users/pkill/PycharmProjects/Bigdata",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+    "git-widget-placeholder": "pkpjs"
   }
 }]]></component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\pkill\PycharmProjects\Bigdata" />
-    </key>
-  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-0e3be3396995-c546a90a8094-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.23339.19" />
+        <option value="bundled-python-sdk-c69650fc56ca-d3b881c8e49f-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-233.15619.17" />
       </set>
     </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="애플리케이션 수준" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="디폴트 작업">
-      <changelist id="10415f2d-19d1-4ae5-ac37-237057bd6891" name="변경" comment="" />
-      <created>1727604757477</created>
+      <changelist id="9dc4cc11-0e31-4240-9b89-fd915f72a041" name="변경" comment="" />
+      <created>1727740241499</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1727604757477</updated>
+      <updated>1727740241499</updated>
     </task>
-    <task id="LOCAL-00001" summary="data set">
-      <option name="closed" value="true" />
-      <created>1727605347548</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1727605347548</updated>
-    </task>
-    <option name="localTasksCounter" value="2" />
     <servers />
-  </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="data set" />
-    <option name="LAST_COMMIT_MESSAGE" value="data set" />
   </component>
 </project>
