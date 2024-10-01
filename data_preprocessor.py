@@ -1,6 +1,4 @@
 import pandas as pd
-from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.decomposition import PCA
 from sklearn.feature_selection import VarianceThreshold
 
 class DataPreprocessor:
@@ -31,10 +29,10 @@ class FeatureSelector:
         self.k_features = k_features
 
     def select_features(self):
-        X_selected = SelectKBest(f_classif, k=self.k_features).fit_transform(self.X, self.Y)
-        return X_selected
+        from sklearn.feature_selection import SelectKBest, f_classif
+        return SelectKBest(f_classif, k=self.k_features).fit_transform(self.X, self.Y)
 
     def apply_pca(self, n_components=50):
+        from sklearn.decomposition import PCA
         pca = PCA(n_components=n_components)
-        X_pca = pca.fit_transform(self.X)
-        return X_pca
+        return pca.fit_transform(self.X)

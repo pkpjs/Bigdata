@@ -13,4 +13,5 @@ class ModelEvaluator:
 
     def evaluate(self):
         y_pred = self.model.predict(self.x_test)
-        return accuracy_score(self.y_test, y_pred)
+        accuracy = accuracy_score(self.y_test, y_pred)
+        return accuracy, y_pred  # 정확도와 예측 결과 반환

@@ -9,7 +9,6 @@ from keras.layers import Dense, Dropout, Input
 from keras.utils import to_categorical
 from model_evaluator import ModelEvaluator
 
-
 class Classifiers:
     def __init__(self, X, Y):
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(X, Y, test_size=0.2, random_state=0)
@@ -21,19 +20,22 @@ class Classifiers:
         model = SVC()
         evaluator = ModelEvaluator(model, self.x_train, self.y_train, self.x_test, self.y_test)
         evaluator.train()
-        return evaluator.evaluate()
+        accuracy, predictions = evaluator.evaluate()  # 정확도와 예측 결과 반환
+        return accuracy, predictions
 
     def do_randomforest(self):
         model = RandomForestClassifier()
         evaluator = ModelEvaluator(model, self.x_train, self.y_train, self.x_test, self.y_test)
         evaluator.train()
-        return evaluator.evaluate()
+        accuracy, predictions = evaluator.evaluate()  # 정확도와 예측 결과 반환
+        return accuracy, predictions
 
     def do_naivebayes(self):
         model = GaussianNB()
         evaluator = ModelEvaluator(model, self.x_train, self.y_train, self.x_test, self.y_test)
         evaluator.train()
-        return evaluator.evaluate()
+        accuracy, predictions = evaluator.evaluate()  # 정확도와 예측 결과 반환
+        return accuracy, predictions
 
     def do_dnn(self, epochs=10):  # epochs 매개변수 추가
         model = Sequential()
@@ -47,9 +49,8 @@ class Classifiers:
         model.add(Dense(len(np.unique(self.y_train)), activation='softmax'))
 
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-
-        # verbose=1로 설정하여 각 에포크의 훈련 결과 출력
         model.fit(self.x_train, to_categorical(self.y_train), epochs=epochs, batch_size=128, verbose=1)
 
         accuracy = model.evaluate(self.x_test, to_categorical(self.y_test), verbose=0)[1]
-        return accuracy
+        predictions = np.argmax(model.predict(self.x_test), axis=1)  # 예측 결과 저장
+        return accuracy, predictions  # 정확도와 예측 결과 반환
