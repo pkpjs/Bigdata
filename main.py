@@ -2,14 +2,21 @@ import pandas as pd
 from data_loader import DataLoader
 from data_preprocessor import DataPreprocessor, FeatureSelector
 from classifiers import Classifiers
-from data_selection import create_file_selector  # 파일 선택 모듈 가져오기
+from data_selection import create_file_selector
+from VirusTotal_API import VirusTotalAPI
+from hash_checker import check_hashes
+import threading
+import random
+import time
+from config import API_KEY
+
 
 if __name__ == "__main__":
-    # 파일 선택 UI 호출
-    normal_file, malware_file = create_file_selector()  # 사용자 입력에서 파일 경로 가져오기
+    api_key =  API_KEY
+
+    normal_file, malware_file = create_file_selector()
     ngram_file = 'ngram (1).csv'
 
-    # 데이터 로드 및 전처리
     data_loader = DataLoader(normal_file, malware_file, ngram_file)
     pe_all = data_loader.load_data(load_malware=malware_file is not None)
 
@@ -17,34 +24,65 @@ if __name__ == "__main__":
         print("데이터가 비어 있습니다. 파일 경로를 확인하세요.")
         exit()
 
+    pe_all = pe_all.loc[:, ~pe_all.columns.duplicated()]
+    pe_all.reset_index(drop=True, inplace=True)
+
     preprocessor = DataPreprocessor(pe_all)
     preprocessor.filter_na()
     preprocessor.drop_columns(['filename', 'MD5', 'packer_type'])
     X, Y = preprocessor.get_features_and_labels()
 
-    # 상수 특성 제거
     X = preprocessor.remove_constant_features(X)
 
     feature_selector = FeatureSelector(X, Y)
-    X = feature_selector.select_features()  # 특성 선택
+    X = feature_selector.select_features()
 
-    # Classifiers 클래스 사용하여 학습 및 평가
     classifier = Classifiers(X, Y)
     results = {
         'svm': classifier.do_svm(),
         'randomforest': classifier.do_randomforest(),
         'naivebayes': classifier.do_naivebayes(),
-        'dnn': classifier.do_dnn(epochs=10)  # 에포크 수 설정
+        'dnn': classifier.do_dnn(epochs=10)
     }
 
-    # 평가 결과를 콘솔에 출력
-    # 모델 평가 및 결과 출력
     print("모델 평가 결과:")
+    malicious_counts = {}
     for model, (accuracy, predictions) in results.items():
         print(f"{model} 정확도: {accuracy:.4f}")
 
-        # 악성(1)과 정상(0)의 개수 계산
         count_malicious = (predictions == 1).sum()
         count_benign = (predictions == 0).sum()
 
         print(f"악성 파일 개수: {count_malicious}, 정상 파일 개수: {count_benign}\n")
+
+        malicious_counts[model] = count_malicious
+
+    max_malicious_count = max(malicious_counts.values())
+    best_models = [model for model, count in malicious_counts.items() if count == max_malicious_count]
+
+    selected_model = best_models[0]
+    print(f"선택된 모델: {selected_model} (악성 파일 개수: {max_malicious_count})")
+
+    pe_all['class'] = Y
+    if 'MD5' in pe_all.columns:
+        malicious_md5 = pe_all.loc[pe_all['class'] == 1, 'MD5']
+        print("악성 파일의 MD5 해시 값:")
+        md5_list = malicious_md5.tolist()
+
+        if len(md5_list) > 10:
+            selected_md5_list = random.sample(md5_list, 10)
+        else:
+            selected_md5_list = md5_list
+
+        vt_api = VirusTotalAPI(api_key)
+
+        # 쓰레드 시작
+        thread = threading.Thread(target=check_hashes, args=(vt_api, selected_md5_list))
+        thread.start()
+
+        for md5_hash in selected_md5_list:
+            time.sleep(0.25)
+
+        thread.join()
+    else:
+        print("MD5 칼럼이 데이터프레임에 없습니다.")
