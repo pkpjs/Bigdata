@@ -9,10 +9,11 @@ import threading
 import random
 import time
 from config import API_KEY
+from plot_results import plot_results  # 그래프 파일에서 함수 가져오기
 
 
 if __name__ == "__main__":
-    api_key =  API_KEY
+    api_key = API_KEY
 
     normal_file, malware_file = create_file_selector()
     ngram_file = 'ngram (1).csv'
@@ -76,13 +77,21 @@ if __name__ == "__main__":
 
         vt_api = VirusTotalAPI(api_key)
 
-        # 쓰레드 시작
+        # VirusTotal API 쓰레드 시작
         thread = threading.Thread(target=check_hashes, args=(vt_api, selected_md5_list))
         thread.start()
 
+        # MD5 해시 확인하는 동안 대기
         for md5_hash in selected_md5_list:
             time.sleep(0.25)
 
+        # 쓰레드가 끝날 때까지 대기
         thread.join()
+
+        print("바이러스 토탈 API 결과 확인이 완료되었습니다.")
+
     else:
         print("MD5 칼럼이 데이터프레임에 없습니다.")
+
+    # 모든 작업이 완료된 후 그래프 출력
+    plot_results(results, malicious_counts)
