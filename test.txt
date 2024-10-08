@@ -1,0 +1,16 @@
+git pull origin 브랜치 / 당겨오는거
+git add . / 추가하는거
+git commit -m "알고리즘 추가 " / 설명문
+
+git add .
+git commit -m
+git push origin 브랜치 / 올리는거
+
+브랜치 변경
+
+git branch
+
+git checkout origin 브랜치 이름
+
+git init / 초기화
+
