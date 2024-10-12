@@ -17,7 +17,7 @@
    <widget class="QPushButton" name="data_select">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>0</x>
       <y>80</y>
       <width>91</width>
       <height>31</height>
@@ -30,7 +30,7 @@
    <widget class="QLabel" name="nomal_file">
     <property name="geometry">
      <rect>
-      <x>30</x>
+      <x>20</x>
       <y>10</y>
       <width>141</width>
       <height>16</height>
@@ -43,9 +43,9 @@
    <widget class="QLabel" name="malware_file">
     <property name="geometry">
      <rect>
-      <x>40</x>
+      <x>20</x>
       <y>40</y>
-      <width>261</width>
+      <width>571</width>
       <height>16</height>
      </rect>
     </property>
@@ -56,7 +56,7 @@
    <widget class="QPushButton" name="train_button">
     <property name="geometry">
      <rect>
-      <x>190</x>
+      <x>170</x>
       <y>80</y>
       <width>101</width>
       <height>31</height>
@@ -69,8 +69,8 @@
    <widget class="QScrollArea" name="train_result">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>320</y>
+      <x>10</x>
+      <y>620</y>
       <width>601</width>
       <height>211</height>
      </rect>
@@ -89,46 +89,23 @@
      </property>
     </widget>
    </widget>
-   <widget class="QLabel" name="label_3">
+   <widget class="QTextEdit" name="epoch">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>140</y>
-      <width>101</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>x_test</string>
-    </property>
-   </widget>
-   <widget class="mplwidget" name="graph" native="true">
-    <property name="geometry">
-     <rect>
-      <x>690</x>
-      <y>190</y>
-      <width>721</width>
-      <height>641</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QTextEdit" name="ecpho">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>190</y>
-      <width>601</width>
-      <height>121</height>
+      <x>0</x>
+      <y>420</y>
+      <width>611</width>
+      <height>161</height>
      </rect>
     </property>
    </widget>
    <widget class="QScrollArea" name="vir_result">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>570</y>
-      <width>611</width>
-      <height>261</height>
+      <x>730</x>
+      <y>620</y>
+      <width>651</width>
+      <height>211</height>
      </rect>
     </property>
     <property name="widgetResizable">
@@ -139,11 +116,21 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>609</width>
-       <height>259</height>
+       <width>649</width>
+       <height>209</height>
       </rect>
      </property>
     </widget>
+   </widget>
+   <widget class="QTextEdit" name="data_preprocessor">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>220</y>
+      <width>611</width>
+      <height>151</height>
+     </rect>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -158,14 +145,6 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>mplwidget</class>
-   <extends>QWidget</extends>
-   <header>mplwidget.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>
