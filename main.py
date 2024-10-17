@@ -1,4 +1,4 @@
-from PyQt5 import uic
+from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog
 import threading
 import random
@@ -11,7 +11,6 @@ from VirusTotal_API import VirusTotalAPI
 from hash_checker import check_hashes
 from config import API_KEY
 from plot_results import plot_results
-
 
 class MyApp(QMainWindow):
     def __init__(self):
@@ -61,9 +60,12 @@ class MyApp(QMainWindow):
         X = preprocessor.remove_constant_features(X)
 
         feature_selector = FeatureSelector(X, Y)
-        X = feature_selector.select_features()
+        X_new = feature_selector.select_features()
 
-        classifier = Classifiers(X, Y)
+        # 선택된 특성 요약 데이터 출력
+        self.load_data_into_table(pd.DataFrame(X_new).describe())  # QTableWidget에 데이터 출력
+
+        classifier = Classifiers(X_new, Y)
         results = {
             'svm': classifier.do_svm(),
             'randomforest': classifier.do_randomforest(),
@@ -119,6 +121,25 @@ class MyApp(QMainWindow):
 
         # 모든 작업이 완료된 후 그래프 출력
         plot_results(results, malicious_counts)
+
+    def load_data_into_table(self, df):
+        # 인덱스 값도 포함하도록 열 수를 한 칸 더 추가
+        self.data_preprocessor_output.setRowCount(len(df))  # 행 수 설정
+        self.data_preprocessor_output.setColumnCount(len(df.columns) + 1)  # 인덱스를 위한 열 추가
+
+        # 열 이름 설정 (첫 번째는 빈 값으로 설정하여 인덱스를 위한 자리)
+        self.data_preprocessor_output.setHorizontalHeaderLabels([''] + df.columns.astype(str).tolist())
+
+        # 인덱스와 데이터를 QTableWidget에 로드
+        for row in range(len(df)):
+            # 인덱스 값 삽입
+            index_item = QtWidgets.QTableWidgetItem(str(df.index[row]))
+            self.data_preprocessor_output.setItem(row, 0, index_item)  # 첫 번째 열에 인덱스 값 삽입
+
+            # 나머지 데이터 삽입
+            for col in range(len(df.columns)):
+                item = QtWidgets.QTableWidgetItem(str(df.iat[row, col]))
+                self.data_preprocessor_output.setItem(row, col + 1, item)  # 두 번째 열부터 데이터 삽입
 
 
 def create_file_selector():
