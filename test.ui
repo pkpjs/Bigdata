@@ -70,9 +70,9 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>180</y>
+      <y>200</y>
       <width>631</width>
-      <height>192</height>
+      <height>171</height>
      </rect>
     </property>
    </widget>
