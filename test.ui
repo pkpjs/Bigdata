@@ -14,98 +14,77 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QPushButton" name="data_select">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>80</y>
-      <width>91</width>
-      <height>31</height>
-     </rect>
+   <layout class="QVBoxLayout" name="verticalLayout_main">
+    <property name="spacing">
+     <number>0</number>
     </property>
-    <property name="text">
-     <string>data_select</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="nomal_file">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>10</y>
-      <width>141</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="malware_file">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>40</y>
-      <width>571</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>No File</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="train_button">
-    <property name="geometry">
-     <rect>
-      <x>170</x>
-      <y>80</y>
-      <width>101</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>start train</string>
-    </property>
-   </widget>
-   <widget class="QTableWidget" name="data_preprocessor_output">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>200</y>
-      <width>631</width>
-      <height>171</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QTableWidget" name="train_result">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>400</y>
-      <width>631</width>
-      <height>192</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QTableWidget" name="vir_result">
-    <property name="geometry">
-     <rect>
-      <x>-20</x>
-      <y>640</y>
-      <width>651</width>
-      <height>192</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QGraphicsView" name="graphicsView">
-    <property name="geometry">
-     <rect>
-      <x>750</x>
-      <y>200</y>
-      <width>671</width>
-      <height>621</height>
-     </rect>
-    </property>
-   </widget>
+
+    <!-- Top Horizontal Layout -->
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_top">
+      <item>
+       <widget class="QPushButton" name="data_select">
+        <property name="text">
+         <string>data_select</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="train_button">
+        <property name="text">
+         <string>start train</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="nomal_file"/>
+      </item>
+      <item>
+       <widget class="QLabel" name="malware_file">
+        <property name="text">
+         <string>No File</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+
+    <!-- Main Content Layout (Tables and Graphics) -->
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_content">
+
+      <!-- Left Table Layout -->
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_leftTables">
+        <item>
+         <widget class="QTableWidget" name="data_preprocessor_output"/>
+        </item>
+        <item>
+         <widget class="QTableWidget" name="train_result"/>
+        </item>
+        <item>
+         <widget class="QTableWidget" name="vir_result"/>
+        </item>
+       </layout>
+      </item>
+
+      <!-- Right Graphics Layout -->
+      <item>
+       <widget class="QGraphicsView" name="graphicsView"/>
+      </item>
+
+     </layout>
+    </item>
+
+    <!-- Status Label -->
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_status">
+      <item>
+       <widget class="QLabel" name="vir_label"/>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -118,6 +97,17 @@
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
  </widget>
  <resources/>
  <connections/>

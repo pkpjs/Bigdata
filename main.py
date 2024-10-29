@@ -9,7 +9,7 @@ from classifiers import Classifiers
 from VirusTotal_API import VirusTotalAPI
 from hash_checker import check_hashes
 from config import API_KEY
-from plot_results import plot_results
+from plot_results import plot_graph
 
 
 def check_hashes(vt_api, md5_list, result_callback):
@@ -39,11 +39,17 @@ class MyApp(QMainWindow):
         super().__init__()
         uic.loadUi('test.ui', self)
 
+        # 기본 파일 설정 및 버튼 설정
         self.train_button.clicked.connect(self.handle_train)
         self.data_select.clicked.connect(self.select_malware_file)
         self.normal_file = 'normal_pe (1).csv'
         self.nomal_file.setText(self.normal_file)
 
+        # 바이러스 토탈 검사 중 메시지 레이블
+        self.vir_label.setVisible(False)
+        self.vir_label.setText("바이러스 토탈 검사 중...")
+
+        # 테이블 설정
         self.vir_result.setColumnCount(6)
         self.vir_result.setHorizontalHeaderLabels(['MD5', 'File Name', 'Type', 'Analysis Date', 'Summary', 'URL'])
         self.train_result.setColumnCount(3)
@@ -60,6 +66,7 @@ class MyApp(QMainWindow):
         malware_file = self.malware_file.text()
         ngram_file = 'ngram (1).csv'
 
+        # 데이터 로딩 및 전처리
         data_loader = DataLoader(normal_file, malware_file, ngram_file)
         pe_all = data_loader.load_data(load_malware=malware_file is not None)
 
@@ -71,8 +78,10 @@ class MyApp(QMainWindow):
         feature_selector = FeatureSelector(X, Y)
         X_new = feature_selector.select_features()
 
+        # 전처리 결과를 테이블에 로드
         self.load_data_into_table(pd.DataFrame(X_new).describe(), self.data_preprocessor_output)
 
+        # 모델 학습 및 결과 표시
         classifier = Classifiers(X_new, Y)
         results = {
             'svm': classifier.do_svm(),
@@ -82,6 +91,15 @@ class MyApp(QMainWindow):
         }
         self.display_training_results(results)
 
+        # 학습 결과를 그래프로 표시
+        accuracies = [result[0] for result in results.values()]
+        model_names = list(results.keys())
+        plot_graph(self.graphicsView, model_names, accuracies)
+
+        # 바이러스 토탈 검사 시작 시 상태 레이블 표시
+        self.vir_label.setVisible(True)
+
+        # MD5 해시를 VirusTotal로 검사
         if 'MD5' in pe_all.columns:
             malicious_md5 = pe_all.loc[pe_all['class'] == 1, 'MD5']
             md5_list = malicious_md5.tolist()
@@ -163,6 +181,10 @@ class MyApp(QMainWindow):
             self.vir_result.setItem(current_row, 1, QtWidgets.QTableWidgetItem("Error parsing result"))
 
     def on_vt_thread_finished(self, message):
+        # 바이러스 토탈 검사 완료 시 상태 레이블 숨기기
+        self.vir_label.setVisible(False)
+
+        # 검사 완료 메시지 박스
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setText(message)
