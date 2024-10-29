@@ -1,5 +1,6 @@
 import requests
-import time  # time 모듈을 추가합니다.
+import time
+
 
 class VirusTotalAPI:
     def __init__(self, api_key):
@@ -14,6 +15,14 @@ class VirusTotalAPI:
         }
         with open(file_path, "rb") as file:
             response = requests.post(url, headers=headers, files={"file": file})
+
+        if response.status_code == 429:
+            print("요청 한도를 초과했습니다 (HTTP 429). 더 이상의 요청을 중단합니다.")
+            return None
+        elif response.status_code not in [200, 201]:
+            print(f"파일 업로드 실패: {response.status_code} - {response.text}")
+            return None
+
         return response.json()
 
     def get_analysis_result(self, resource_id):
@@ -23,6 +32,14 @@ class VirusTotalAPI:
             "x-apikey": self.api_key
         }
         response = requests.get(url, headers=headers)
+
+        if response.status_code == 429:
+            print("요청 한도를 초과했습니다 (HTTP 429). 더 이상의 요청을 중단합니다.")
+            return None
+        elif response.status_code != 200:
+            print(f"분석 결과 조회 실패: {response.status_code} - {response.text}")
+            return None
+
         return response.json()
 
     def check_hashes_with_virustotal(self, md5_list):
@@ -38,6 +55,15 @@ class VirusTotalAPI:
                     "x-apikey": self.api_key
                 }
                 response = requests.get(url, headers=headers)
+
+                if response.status_code == 429:
+                    print("요청 한도를 초과했습니다 (HTTP 429). 더 이상의 요청을 중단합니다.")
+                    return results  # 현재까지의 결과 반환
+                elif response.status_code != 200:
+                    print(f"해시 조회 실패 ({md5_hash}): {response.status_code} - {response.text}")
+                    results[md5_hash] = None
+                    continue
+
                 results[md5_hash] = response.json()
                 print(f"검사 중: {md5_hash}")  # 진행 상황 확인
 
