@@ -1,54 +1,30 @@
-import tkinter as tk
-from tkinter import filedialog
+from PyQt5 import uic
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog
 
-def load_file(title):
-    file_path = filedialog.askopenfilename(title=title, filetypes=[("CSV files", "*.csv")])
-    return file_path
+class MyApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('test.ui', self)  # 수정된 .ui 파일 로드
+
+        # data_select 버튼 클릭 시 파일 선택 다이얼로그 연결
+        self.data_select.clicked.connect(self.select_malware_file)
+
+        # 기본 정상 파일 설정
+        self.normal_file = 'normal_pe (1).csv'
+        self.nomal_file.setText(self.normal_file)  # 정상 파일 라벨에 기본값 설정
+
+    def select_malware_file(self):
+        # 악성 파일 선택 다이얼로그
+        malware_file, _ = QFileDialog.getOpenFileName(self, "악성 데이터 파일을 선택하세요", "", "CSV Files (*.csv)")
+        if malware_file:
+            self.malware_file.setText(malware_file)  # 선택한 악성 파일 경로를 라벨에 표시
 
 def create_file_selector():
-    root = tk.Tk()
-    root.title("데이터 파일 선택기")
+    app = QApplication([])
+    window = MyApp()
+    window.show()
+    app.exec_()
 
-    # 정상 데이터 파일 입력 필드 및 변수
-    normal_file_entry = tk.Entry(root, width=50)
-    normal_file_entry.pack(pady=5)
-    normal_file_entry.insert(0, 'normal_pe (1).csv')  # 기본 정상 데이터 파일
-
-    # 악성 데이터 파일 입력 필드 및 변수
-    malware_file_entry = tk.Entry(root, width=50)
-    malware_file_entry.pack(pady=5)
-
-    default_malware_file = 'malware_pe (1).csv'
-
-    def select_malware_file():
-        malware_file = load_file("악성 데이터 파일을 선택하세요")
-        if malware_file:
-            malware_file_entry.delete(0, tk.END)
-            malware_file_entry.insert(0, malware_file)  # 선택한 경로 입력
-        finalize_selection()
-
-    def use_default_malware_file():
-        malware_file_entry.delete(0, tk.END)
-        malware_file_entry.insert(0, default_malware_file)  # 기본값 입력
-        finalize_selection()
-
-    def finalize_selection():
-        start_button.config(state=tk.NORMAL)  # 시작 버튼 활성화
-
-    # 시작 버튼 (처리 시작)
-    start_button = tk.Button(root, text="처리 시작", command=root.quit, state=tk.DISABLED)  # 비활성화 상태로 시작
-    start_button.pack(pady=20)
-
-    # 악성 데이터 파일 선택 여부 질문
-    malware_question_label = tk.Label(root, text="악성 데이터 파일을 선택하시겠습니까? (yes/no):")
-    malware_question_label.pack(pady=10)
-
-    yes_button = tk.Button(root, text="Yes", command=select_malware_file)
-    yes_button.pack(pady=5)
-
-    no_button = tk.Button(root, text="No", command=use_default_malware_file)
-    no_button.pack(pady=5)
-
-    root.mainloop()
-
-    return normal_file_entry.get(), malware_file_entry.get()  # 입력된 파일 경로 반환
+# 실행 부분
+if __name__ == "__main__":
+    create_file_selector()
