@@ -23,6 +23,12 @@
       <height>101</height>
      </rect>
     </property>
+    <property name="minimumSize">
+     <size>
+      <width>451</width>
+      <height>101</height>
+     </size>
+    </property>
    </widget>
    <widget class="QTableWidget" name="vir_result">
     <property name="geometry">
@@ -32,6 +38,12 @@
       <width>871</width>
       <height>221</height>
      </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>871</width>
+      <height>221</height>
+     </size>
     </property>
    </widget>
    <widget class="QTableWidget" name="train_result">
@@ -43,34 +55,38 @@
       <height>111</height>
      </rect>
     </property>
-   </widget>
-   <widget class="QGraphicsView" name="graphicsView_2">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>580</y>
-      <width>256</width>
-      <height>192</height>
-     </rect>
+    <property name="minimumSize">
+     <size>
+      <width>451</width>
+      <height>111</height>
+     </size>
     </property>
    </widget>
    <widget class="QGraphicsView" name="graphicsView">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>413</y>
+      <y>420</y>
       <width>1341</width>
-      <height>441</height>
+      <height>451</height>
      </rect>
     </property>
     <property name="minimumSize">
      <size>
-      <width>1341</width>
-      <height>441</height>
+      <width>661</width>
+      <height>451</height>
      </size>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>581</width>
+      <height>163</height>
+     </rect>
+    </property>
     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0">
       <layout class="QHBoxLayout" name="horizontalLayout_fileSelection">

@@ -1,5 +1,3 @@
-# main.py
-
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QGraphicsView
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -71,8 +69,15 @@ class MyApp(QMainWindow):
             self.vir_result.setHorizontalHeaderLabels(['MD5', 'File Name', 'Type', 'Analysis Date', 'Summary', 'URL'])
 
         if self.train_result:
-            self.train_result.setColumnCount(3)
-            self.train_result.setHorizontalHeaderLabels(['Model', 'Accuracy', 'Malicious Count'])
+            self.train_result.setColumnCount(4)
+            self.train_result.setHorizontalHeaderLabels(['Model', 'Accuracy', 'Malicious Count', 'Benign Count'])
+
+        if self.confusion_matrix_result:
+            self.confusion_matrix_result.setColumnCount(3)
+            self.confusion_matrix_result.setHorizontalHeaderLabels(['Model', 'Predicted: No', 'Predicted: Yes'])
+
+        if self.preprocessing_result:
+            self.preprocessing_result.setVisible(False)  # 초기에는 숨김
 
         if self.train_button:
             self.train_button.clicked.connect(self.handle_train)
@@ -90,7 +95,6 @@ class MyApp(QMainWindow):
                 self.malware_file.setText(malware_file)
 
     def handle_train(self):
-        # 전처리 상태 표시
         if self.status_virus_total:
             self.status_virus_total.setText("전처리 중...")
             self.status_virus_total.setVisible(True)
@@ -101,7 +105,6 @@ class MyApp(QMainWindow):
         ngram_file = 'ngram (1).csv'
 
         try:
-            # 데이터 로드 및 전처리
             data_loader = DataLoader(normal_file, malware_file, ngram_file)
             pe_all = data_loader.load_data(load_malware=malware_file != "")
 
@@ -113,39 +116,35 @@ class MyApp(QMainWindow):
             feature_selector = FeatureSelector(X, Y, k_features=10)
             X_new = pd.DataFrame(feature_selector.select_features(), columns=[f'Feature {i}' for i in range(1, 11)])
 
-            # 전처리 완료 상태 업데이트
             if self.status_virus_total:
                 self.status_virus_total.setText("전처리 완료")
                 self.status_virus_total.setVisible(False)
 
-            # 최종 선택된 10개 특성에 대한 요약 통계 계산
-            summary_stats = X_new.describe(include='all').transpose()
+            # 전처리된 데이터의 첫 50개 행을 표시하도록 수정
+            preprocessed_data_to_display = X_new.head(50)
 
-            # 전처리 결과 요약 통계를 QTableWidget에 표시
             if self.preprocessing_result:
                 self.preprocessing_result.setVisible(True)
-                self.preprocessing_result.setRowCount(len(summary_stats.index))
-                self.preprocessing_result.setColumnCount(len(summary_stats.columns))
-                self.preprocessing_result.setHorizontalHeaderLabels(summary_stats.columns.tolist())
-                self.preprocessing_result.setVerticalHeaderLabels(summary_stats.index.tolist())
+                self.preprocessing_result.setRowCount(len(preprocessed_data_to_display))
+                self.preprocessing_result.setColumnCount(len(preprocessed_data_to_display.columns))
+                self.preprocessing_result.setHorizontalHeaderLabels(preprocessed_data_to_display.columns.tolist())
+                self.preprocessing_result.setVerticalHeaderLabels([str(i) for i in preprocessed_data_to_display.index])
 
-                for row_idx, (index, row) in enumerate(summary_stats.iterrows()):
+                for row_idx, row in preprocessed_data_to_display.iterrows():
                     for col_idx, value in enumerate(row):
                         item = QtWidgets.QTableWidgetItem(str(value))
                         self.preprocessing_result.setItem(row_idx, col_idx, item)
 
-            # 학습 시작
             classifier = Classifiers(X_new, Y)
             results = {
                 'svm': classifier.do_svm(),
                 'randomforest': classifier.do_randomforest(),
                 'naivebayes': classifier.do_naivebayes(),
-                'dnn': classifier.do_dnn(epochs=10)
+                'dnn': classifier.do_dnn(epochs=50)
             }
             self.display_training_results(results)
             self.display_confusion_matrices(results, Y)
 
-            # 그래프 그리기 - plot_utils의 plot_graph 함수 호출
             accuracies = [result[0] for result in results.values()]
             model_names = list(results.keys())
 
@@ -161,7 +160,6 @@ class MyApp(QMainWindow):
                 color='blue'     # 선 색상
             )
 
-            # VirusTotal API 검사
             if 'MD5' in pe_all.columns and self.vir_result:
                 malicious_md5 = pe_all.loc[pe_all['class'] == 1, 'MD5']
                 md5_list = malicious_md5.tolist()
@@ -190,16 +188,22 @@ class MyApp(QMainWindow):
             print("train_result 테이블을 찾을 수 없습니다.")
             return
 
+        self.train_result.setColumnCount(4)
+        self.train_result.setHorizontalHeaderLabels(['Model', 'Accuracy', 'Malicious Count', 'Benign Count'])
         self.train_result.setRowCount(len(results) + 1)
 
         malicious_counts = {}
+        benign_counts = {}
         for row, (model, (accuracy, predictions)) in enumerate(results.items()):
             count_malicious = (predictions == 1).sum()
+            count_benign = (predictions == 0).sum()
             malicious_counts[model] = count_malicious
+            benign_counts[model] = count_benign
 
             self.train_result.setItem(row, 0, QtWidgets.QTableWidgetItem(model))
             self.train_result.setItem(row, 1, QtWidgets.QTableWidgetItem(f"{accuracy:.4f}"))
             self.train_result.setItem(row, 2, QtWidgets.QTableWidgetItem(str(count_malicious)))
+            self.train_result.setItem(row, 3, QtWidgets.QTableWidgetItem(str(count_benign)))
 
         if malicious_counts:
             max_malicious_count = max(malicious_counts.values())
@@ -209,24 +213,24 @@ class MyApp(QMainWindow):
             self.train_result.setItem(len(results), 0, QtWidgets.QTableWidgetItem("Selected Model"))
             self.train_result.setItem(len(results), 1, QtWidgets.QTableWidgetItem(selected_model))
             self.train_result.setItem(len(results), 2, QtWidgets.QTableWidgetItem(str(max_malicious_count)))
+            if benign_counts:
+                max_benign_count = max(benign_counts.values())
+                self.train_result.setItem(len(results), 3, QtWidgets.QTableWidgetItem(str(max_benign_count)))
 
     def display_confusion_matrices(self, results, Y_true):
-        """
-        혼돈 행렬을 생성하여 QTableWidget에 표시
-        """
         if not self.confusion_matrix_result:
             print("confusion_matrix_result 테이블을 찾을 수 없습니다.")
             return
 
         self.confusion_matrix_result.clear()
-        self.confusion_matrix_result.setRowCount(len(results) * 2)  # 모델 별로 행을 할당
+        self.confusion_matrix_result.setRowCount(len(results) * 2)
         self.confusion_matrix_result.setColumnCount(3)
         self.confusion_matrix_result.setHorizontalHeaderLabels(['Model', 'Predicted: No', 'Predicted: Yes'])
 
         row_idx = 0
         for model_name, (accuracy, predictions) in results.items():
             cm = confusion_matrix(Y_true, predictions)
-            if cm.shape == (2, 2):  # 이진 분류일 경우
+            if cm.shape == (2, 2):
                 self.confusion_matrix_result.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(f"{model_name} (Actual: No)"))
                 self.confusion_matrix_result.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(cm[0, 0])))
                 self.confusion_matrix_result.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(str(cm[0, 1])))
