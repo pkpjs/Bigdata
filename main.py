@@ -4,7 +4,6 @@ from PyQt5.QtCore import QThread, pyqtSignal
 import random
 import pandas as pd
 import numpy as np
-from sklearn.metrics import confusion_matrix
 from data_loader import DataLoader
 from data_preprocessor import DataPreprocessor, FeatureSelector
 from classifiers import Classifiers
@@ -51,7 +50,6 @@ class MyApp(QMainWindow):
         self.status_virus_total = self.findChild(QtWidgets.QLabel, 'status_virus_total')
         self.vir_result = self.findChild(QtWidgets.QTableWidget, 'vir_result')
         self.train_result = self.findChild(QtWidgets.QTableWidget, 'train_result')
-        self.confusion_matrix_result = self.findChild(QtWidgets.QTableWidget, 'confusion_matrix_result')
         self.preprocessing_result = self.findChild(QtWidgets.QTableWidget, 'preprocessing_result')
         self.train_button = self.findChild(QtWidgets.QPushButton, 'train_button')
         self.data_select = self.findChild(QtWidgets.QPushButton, 'data_select')
@@ -71,10 +69,6 @@ class MyApp(QMainWindow):
         if self.train_result:
             self.train_result.setColumnCount(4)
             self.train_result.setHorizontalHeaderLabels(['Model', 'Accuracy', 'Malicious Count', 'Benign Count'])
-
-        if self.confusion_matrix_result:
-            self.confusion_matrix_result.setColumnCount(3)
-            self.confusion_matrix_result.setHorizontalHeaderLabels(['Model', 'Predicted: No', 'Predicted: Yes'])
 
         if self.preprocessing_result:
             self.preprocessing_result.setVisible(False)  # 초기에는 숨김
@@ -143,7 +137,6 @@ class MyApp(QMainWindow):
                 'dnn': classifier.do_dnn(epochs=50)
             }
             self.display_training_results(results)
-            self.display_confusion_matrices(results, Y)
 
             accuracies = [result[0] for result in results.values()]
             model_names = list(results.keys())
@@ -216,30 +209,6 @@ class MyApp(QMainWindow):
             if benign_counts:
                 max_benign_count = max(benign_counts.values())
                 self.train_result.setItem(len(results), 3, QtWidgets.QTableWidgetItem(str(max_benign_count)))
-
-    def display_confusion_matrices(self, results, Y_true):
-        if not self.confusion_matrix_result:
-            print("confusion_matrix_result 테이블을 찾을 수 없습니다.")
-            return
-
-        self.confusion_matrix_result.clear()
-        self.confusion_matrix_result.setRowCount(len(results) * 2)
-        self.confusion_matrix_result.setColumnCount(3)
-        self.confusion_matrix_result.setHorizontalHeaderLabels(['Model', 'Predicted: No', 'Predicted: Yes'])
-
-        row_idx = 0
-        for model_name, (accuracy, predictions) in results.items():
-            cm = confusion_matrix(Y_true, predictions)
-            if cm.shape == (2, 2):
-                self.confusion_matrix_result.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(f"{model_name} (Actual: No)"))
-                self.confusion_matrix_result.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(cm[0, 0])))
-                self.confusion_matrix_result.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(str(cm[0, 1])))
-
-                row_idx += 1
-                self.confusion_matrix_result.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(f"{model_name} (Actual: Yes)"))
-                self.confusion_matrix_result.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(cm[1, 0])))
-                self.confusion_matrix_result.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(str(cm[1, 1])))
-                row_idx += 1
 
     def update_vir_result(self, md5_hash, result):
         if not self.vir_result:
