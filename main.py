@@ -184,7 +184,7 @@ class MyApp(QMainWindow):
         # 바이러스 토탈 검사 완료 시 상태 레이블 숨기기
         self.vir_label.setVisible(False)
 
-        # 검사 완료 메시지 박스
+        # 검사 완료 메시지 박스  
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setText(message)
