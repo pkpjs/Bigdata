@@ -1,20 +1,15 @@
-import sys
-import os
+# -*- coding: utf-8 -*-
 from PyQt5 import uic, QtWidgets
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QFileDialog, QMessageBox, QGraphicsView,
-    QInputDialog, QLineEdit, QAction
-)
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QGraphicsView
 from PyQt5.QtCore import QThread, pyqtSignal
 import random
 import pandas as pd
 import numpy as np
-from sklearn.metrics import confusion_matrix
 from data_loader import DataLoader
 from data_preprocessor import DataPreprocessor, FeatureSelector
 from classifiers import Classifiers
 from VirusTotal_API import VirusTotalAPI
-from cryptography.fernet import Fernet
+import os
 
 # TensorFlow 경고 메시지 제거 (선택 사항)
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
@@ -22,118 +17,77 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 # plot_utils에서 plot_graph 함수 임포트
 from plot_utils import plot_graph
 
-def generate_key():
-    """새로운 암호화 키를 생성하여 secret.key 파일에 저장"""
-    key = Fernet.generate_key()
-    with open('secret.key', 'wb') as key_file:
-        key_file.write(key)
-    print("암호화 키가 생성되어 'secret.key' 파일에 저장되었습니다.")
-
-def load_key():
-    """암호화 키를 파일에서 로드"""
-    key_path = 'secret.key'
-    if not os.path.exists(key_path):
-        generate_key()
-    with open(key_path, 'rb') as key_file:
-        key = key_file.read()
-    return key
-
-def save_api_key(api_key, cipher_suite):
-    """API 키를 암호화하여 저장하기"""
-    if api_key:
-        encrypted_api_key = cipher_suite.encrypt(api_key.encode()).decode()
-        with open('api_key.enc', 'w') as enc_file:
-            enc_file.write(encrypted_api_key)
-        print("암호화된 API 키가 'api_key.enc' 파일에 저장되었습니다.")
-    else:
-        print("빈 API 키는 저장할 수 없습니다.")
-
-def load_api_key_from_file(cipher_suite):
-    """암호화된 API 키를 복호화하여 로드하기"""
-    enc_file_path = 'api_key.enc'
-    if os.path.exists(enc_file_path):
-        with open(enc_file_path, 'r') as enc_file:
-            encrypted_api_key = enc_file.read()
-        try:
-            decrypted_api_key = cipher_suite.decrypt(encrypted_api_key.encode()).decode()
-            if decrypted_api_key:
-                print("API 키가 성공적으로 복호화되었습니다.")
-                return decrypted_api_key
-            else:
-                print("복호화된 API 키가 비어 있습니다.")
-                return None
-        except Exception as e:
-            print(f"API 키 복호화 실패: {e}")
-            return None
-    else:
-        print("'api_key.enc' 파일이 존재하지 않습니다.")
-        return None
-
 class VirusTotalThread(QThread):
-    hash_result = pyqtSignal(str, dict)
+    hash_result = pyqtSignal(str, dict, str)  # 해시 타입 추가
     finished = pyqtSignal(str)
     limit_exceeded = pyqtSignal()
+    invalid_api_key = pyqtSignal()
 
-    def __init__(self, api_key, md5_list):
+    def __init__(self, api_key, hash_list, hash_type='MD5'):
         super().__init__()
         self.api_key = api_key
-        self.md5_list = md5_list
+        self.hash_list = hash_list
+        self.hash_type = hash_type  # 'MD5' 또는 'sha256'
 
     def run(self):
         vt_api = VirusTotalAPI(self.api_key)
-        vt_results = vt_api.check_hashes_with_virustotal(self.md5_list)
-        if vt_results is not None:
-            for md5_hash, result in vt_results.items():
-                if result is not None:
-                    self.hash_result.emit(md5_hash, result)
-                else:
-                    self.hash_result.emit(md5_hash, {"error": "요청 실패"})
-        if vt_results is None or len(vt_results) < len(self.md5_list):
+        try:
+            vt_results = vt_api.check_hashes_with_virustotal(self.hash_list, self.hash_type)
+        except Exception as e:
+            print(f"API 호출 중 예외 발생: {e}")
+            self.invalid_api_key.emit()
+            return
+
+        if isinstance(vt_results, dict) and vt_results.get("invalid_api_key"):
+            self.invalid_api_key.emit()
+            return
+
+        for hash_val, result in vt_results.items():
+            if result is not None:
+                self.hash_result.emit(hash_val, result, self.hash_type)
+            else:
+                self.hash_result.emit(hash_val, {"error": "요청 실패"}, self.hash_type)
+
+        if len(vt_results) < len(self.hash_list):
             self.limit_exceeded.emit()
         else:
-            self.finished.emit("바이러스 토탈 API 검사 완료")
+            self.finished.emit(f"{self.hash_type} 검사 완료")
 
 class MyApp(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('test.ui', self)
 
-        # 암호화 키 로드
-        try:
-            self.key = load_key()
-            self.cipher_suite = Fernet(self.key)
-        except Exception as e:
-            QMessageBox.critical(self, "오류", f"암호화 키 로드/생성 중 오류가 발생했습니다: {e}")
-            sys.exit(1)
-
         # 위젯 참조
-        self.status_virus_total = self.findChild(QtWidgets.QLabel, 'status_virus_total')
+        self.status_data_preprocessing = self.findChild(QtWidgets.QLabel, 'status_data_preprocessing')
+        self.status_model_training = self.findChild(QtWidgets.QLabel, 'status_model_training')
+        self.status_virus_total = self.findChild(QtWidgets.QLabel, 'status_virus_total')  # 여전히 존재하나 UI에서 제거됨
         self.vir_result = self.findChild(QtWidgets.QTableWidget, 'vir_result')
         self.train_result = self.findChild(QtWidgets.QTableWidget, 'train_result')
-        self.confusion_matrix_result = self.findChild(QtWidgets.QTableWidget, 'confusion_matrix_result')
         self.preprocessing_result = self.findChild(QtWidgets.QTableWidget, 'preprocessing_result')
         self.train_button = self.findChild(QtWidgets.QPushButton, 'train_button')
         self.data_select = self.findChild(QtWidgets.QPushButton, 'data_select')
-        self.normal_file = self.findChild(QLineEdit, 'normal_file')
-        self.malware_file = self.findChild(QLineEdit, 'malware_file')
+        self.normal_file = self.findChild(QtWidgets.QLineEdit, 'normal_file')
+        self.malware_file = self.findChild(QtWidgets.QLineEdit, 'malware_file')
         self.graphicsView = self.findChild(QGraphicsView, 'graphicsView')
+        self.api_key_input = self.findChild(QtWidgets.QLineEdit, 'api_key_input')  # API 키 입력 필드 참조
 
         # 위젯 초기화
+        if self.status_data_preprocessing:
+            self.status_data_preprocessing.setText("대기 중")
+        if self.status_model_training:
+            self.status_model_training.setText("대기 중")
         if self.status_virus_total:
             self.status_virus_total.setVisible(False)
-            self.status_virus_total.setText("바이러스 토탈 검사 중...")
+            self.status_virus_total.setText("대기 중")  # UI에서 제거되었으므로 추후 필요 시 삭제
 
         if self.vir_result:
-            self.vir_result.setColumnCount(6)
-            self.vir_result.setHorizontalHeaderLabels(['MD5', '파일 이름', '유형', '분석 날짜', '요약', 'URL'])
+            self.vir_result.setColumnCount(7)  # 7개 칼럼
+            self.vir_result.setHorizontalHeaderLabels(['MD5', 'SHA256', 'File Name', 'Type', 'Analysis Date', 'Summary', 'URL'])
 
         if self.train_result:
             self.train_result.setColumnCount(4)
-            self.train_result.setHorizontalHeaderLabels(['모델', '정확도', '악성 개수', '양성 개수'])
-
-        if self.confusion_matrix_result:
-            self.confusion_matrix_result.setColumnCount(3)
-            self.confusion_matrix_result.setHorizontalHeaderLabels(['모델', '예측: 아니오', '예측: 예'])
+            self.train_result.setHorizontalHeaderLabels(['Model', 'Accuracy', 'Malicious Count', 'Benign Count'])
 
         if self.preprocessing_result:
             self.preprocessing_result.setVisible(False)  # 초기에는 숨김
@@ -147,110 +101,49 @@ class MyApp(QMainWindow):
         if self.normal_file:
             self.normal_file.setText('normal_pe (1).csv')
 
-        # API 키를 저장할 변수 초기화
-        self.api_key = None
-
-        # 저장된 API 키 불러오기
-        self.api_key = load_api_key_from_file(self.cipher_suite)
-
-        # API 키가 없으면 사용자에게 입력 받기
-        if not self.api_key:
-            self.prompt_for_api_key()
-
-        # 메뉴 바에 설정 메뉴 추가 (API 키 변경 기능 추가)
-        menubar = self.menuBar()
-        settings_menu = menubar.addMenu('설정')
-
-        change_api_key_action = QAction('API 키 변경', self)
-        change_api_key_action.triggered.connect(self.change_api_key)
-        settings_menu.addAction(change_api_key_action)
-
-    def prompt_for_api_key(self):
-        """사용자에게 API 키 입력을 요청하고 저장"""
-        while True:
-            self.api_key, ok = QInputDialog.getText(
-                self,
-                "API 키 입력",
-                "바이러스 토탈 API 키를 입력하세요:",
-                QLineEdit.Password  # 보안을 위해 입력 내용을 숨김
-            )
-            if ok:
-                self.api_key = self.api_key.strip()
-                if self.api_key:
-                    # 입력받은 API 키 저장
-                    save_api_key(self.api_key, self.cipher_suite)
-                    QMessageBox.information(self, "성공", "API 키가 성공적으로 저장되었습니다.")
-                    break
-                else:
-                    QMessageBox.warning(self, "입력 오류", "API 키는 비어 있을 수 없습니다. 다시 입력하세요.")
-            else:
-                QMessageBox.warning(self, "취소됨", "API 키 입력이 취소되었습니다.")
-                # 애플리케이션을 종료하거나 기본 동작을 설정할 수 있습니다.
-                sys.exit(1)
-
-    def change_api_key(self):
-        """메뉴에서 API 키 변경하기"""
-        while True:
-            new_api_key, ok = QInputDialog.getText(
-                self,
-                "API 키 변경",
-                "새로운 바이러스 토탈 API 키를 입력하세요:",
-                QLineEdit.Password
-            )
-            if ok:
-                new_api_key = new_api_key.strip()
-                if new_api_key:
-                    self.api_key = new_api_key
-                    save_api_key(self.api_key, self.cipher_suite)
-                    QMessageBox.information(self, "성공", "API 키가 성공적으로 변경되었습니다.")
-                    break
-                else:
-                    QMessageBox.warning(self, "입력 오류", "API 키는 비어 있을 수 없습니다. 다시 입력하세요.")
-            else:
-                QMessageBox.warning(self, "취소됨", "API 키 변경이 취소되었습니다.")
-                break
-
     def select_malware_file(self):
-        """악성 데이터 파일 선택"""
         malware_file, _ = QFileDialog.getOpenFileName(self, "악성 데이터 파일을 선택하세요", "", "CSV Files (*.csv)")
         if malware_file:
             if self.malware_file:
                 self.malware_file.setText(malware_file)
 
     def handle_train(self):
-        """훈련 버튼 클릭 시 처리 로직"""
-        if self.status_virus_total:
-            self.status_virus_total.setText("전처리 중...")
-            self.status_virus_total.setVisible(True)
+        print("훈련 시작")
+        # 전처리 상태 업데이트
+        if self.status_data_preprocessing:
+            self.status_data_preprocessing.setText("전처리 중...")
 
-        # API 키가 입력되지 않은 경우 사용자에게 입력 받기
-        if not self.api_key:
-            self.prompt_for_api_key()
-            if not self.api_key:
-                QMessageBox.warning(self, "API 키 필요", "바이러스 토탈 API 키가 필요합니다.")
-                if self.status_virus_total:
-                    self.status_virus_total.setVisible(False)
-                return
+        # API 키 가져오기
+        api_key = self.api_key_input.text().strip() if self.api_key_input else ""
+        print(f"API 키: {api_key}")
+        if not api_key:
+            QMessageBox.warning(self, "API 키 누락", "바이러스 토탈 API 키를 입력하세요.")
+            if self.status_data_preprocessing:
+                self.status_data_preprocessing.setText("대기 중")
+            return
 
         normal_file = self.normal_file.text() if self.normal_file else ""
         malware_file = self.malware_file.text() if self.malware_file else ""
         ngram_file = 'ngram (1).csv'
+        print(f"파일 경로 - 정상: {normal_file}, 악성: {malware_file}, ngram: {ngram_file}")
 
         try:
             data_loader = DataLoader(normal_file, malware_file, ngram_file)
             pe_all = data_loader.load_data(load_malware=malware_file != "")
+            print("데이터 로딩 완료")
 
             preprocessor = DataPreprocessor(pe_all)
             preprocessor.filter_na()
-            preprocessor.drop_columns(['filename', 'MD5', 'packer_type'])
+            preprocessor.drop_columns(['filename', 'packer_type'])  # 'MD5' 유지
             X, Y = preprocessor.get_features_and_labels()
             X = preprocessor.remove_constant_features(X)
             feature_selector = FeatureSelector(X, Y, k_features=10)
             X_new = pd.DataFrame(feature_selector.select_features(), columns=[f'Feature {i}' for i in range(1, 11)])
+            print("데이터 전처리 및 특징 선택 완료")
 
-            if self.status_virus_total:
-                self.status_virus_total.setText("전처리 완료")
-                self.status_virus_total.setVisible(False)
+            # 전처리 완료 상태 업데이트
+            if self.status_data_preprocessing:
+                self.status_data_preprocessing.setText("전처리 완료")
 
             # 전처리된 데이터의 첫 50개 행을 표시
             preprocessed_data_to_display = X_new.head(50)
@@ -267,6 +160,11 @@ class MyApp(QMainWindow):
                         item = QtWidgets.QTableWidgetItem(str(value))
                         self.preprocessing_result.setItem(row_idx, col_idx, item)
 
+            # 모델 학습 상태 업데이트
+            if self.status_model_training:
+                self.status_model_training.setText("모델 학습 중...")
+
+            # 모델 학습
             classifier = Classifiers(X_new, Y)
             results = {
                 'svm': classifier.do_svm(),
@@ -274,8 +172,8 @@ class MyApp(QMainWindow):
                 'naivebayes': classifier.do_naivebayes(),
                 'dnn': classifier.do_dnn(epochs=50)
             }
+            print("모델 학습 완료")
             self.display_training_results(results)
-            self.display_confusion_matrices(results, Y)
 
             accuracies = [result[0] for result in results.values()]
             model_names = list(results.keys())
@@ -291,31 +189,61 @@ class MyApp(QMainWindow):
                 marker='o',      # 데이터 포인트 마커
                 color='blue'     # 선 색상
             )
+            print("그래프 그리기 완료")
 
-            if 'MD5' in pe_all.columns and self.vir_result:
+            # 모델 학습 완료 상태 업데이트
+            if self.status_model_training:
+                self.status_model_training.setText("모델 학습 완료")
+
+            # 바이러스 토탈 검사 시작
+            if 'MD5' in pe_all.columns and 'sha256' in pe_all.columns and self.vir_result:
                 malicious_md5 = pe_all.loc[pe_all['class'] == 1, 'MD5']
-                md5_list = malicious_md5.tolist()
+                malicious_sha256 = pe_all.loc[pe_all['class'] == 1, 'sha256']
 
+                md5_list = malicious_md5.tolist()
+                sha256_list = malicious_sha256.tolist()
+
+                # 샘플링 (10개 이하일 경우 전체 사용)
                 if len(md5_list) > 10:
                     selected_md5_list = random.sample(md5_list, 10)
                 else:
                     selected_md5_list = md5_list
 
-                self.total_requests = len(selected_md5_list)
-                self.completed_requests = 0
+                if len(sha256_list) > 10:
+                    selected_sha256_list = random.sample(sha256_list, 10)
+                else:
+                    selected_sha256_list = sha256_list
 
-                self.vt_thread = VirusTotalThread(self.api_key, selected_md5_list)
-                self.vt_thread.hash_result.connect(self.update_vir_result)
-                self.vt_thread.finished.connect(self.on_vt_thread_finished)
-                self.vt_thread.limit_exceeded.connect(self.on_limit_exceeded)
-                self.vt_thread.start()
+                print(f"MD5 샘플: {selected_md5_list}")
+                print(f"SHA256 샘플: {selected_sha256_list}")
+
+                # MD5 검사 스레드 시작
+                self.vt_thread_md5 = VirusTotalThread(api_key, selected_md5_list, hash_type='MD5')
+                self.vt_thread_md5.hash_result.connect(lambda hash_val, res, ht: self.update_vir_result(hash_val, res, ht))
+                self.vt_thread_md5.finished.connect(self.on_vt_thread_finished)
+                self.vt_thread_md5.limit_exceeded.connect(self.on_limit_exceeded)
+                self.vt_thread_md5.invalid_api_key.connect(self.on_invalid_api_key)
+                self.vt_thread_md5.start()
+                print("MD5 검사 스레드 시작")
+
+                # SHA256 검사 스레드 시작
+                self.vt_thread_sha256 = VirusTotalThread(api_key, selected_sha256_list, hash_type='sha256')
+                self.vt_thread_sha256.hash_result.connect(lambda hash_val, res, ht: self.update_vir_result(hash_val, res, ht))
+                self.vt_thread_sha256.finished.connect(self.on_vt_thread_finished)
+                self.vt_thread_sha256.limit_exceeded.connect(self.on_limit_exceeded)
+                self.vt_thread_sha256.invalid_api_key.connect(self.on_invalid_api_key)
+                self.vt_thread_sha256.start()
+                print("SHA256 검사 스레드 시작")
             else:
-                print("MD5 칼럼이 데이터프레임에 없거나 vir_result 테이블을 찾을 수 없습니다.")
+                print("필요한 칼럼이 데이터프레임에 없거나 vir_result 테이블을 찾을 수 없습니다.")
 
         except Exception as e:
+            print(f"훈련 중 오류 발생: {e}")
             QMessageBox.critical(self, "오류", f"훈련 중 오류가 발생했습니다: {e}")
-            if self.status_virus_total:
-                self.status_virus_total.setVisible(False)
+            if self.status_data_preprocessing:
+                self.status_data_preprocessing.setText("대기 중")
+            if self.status_model_training:
+                self.status_model_training.setText("대기 중")
 
     def display_training_results(self, results):
         if not self.train_result:
@@ -323,7 +251,7 @@ class MyApp(QMainWindow):
             return
 
         self.train_result.setColumnCount(4)
-        self.train_result.setHorizontalHeaderLabels(['모델', '정확도', '악성 개수', '양성 개수'])
+        self.train_result.setHorizontalHeaderLabels(['Model', 'Accuracy', 'Malicious Count', 'Benign Count'])
         self.train_result.setRowCount(len(results) + 1)
 
         malicious_counts = {}
@@ -344,80 +272,87 @@ class MyApp(QMainWindow):
             best_models = [model for model, count in malicious_counts.items() if count == max_malicious_count]
             selected_model = best_models[0] if best_models else "N/A"
 
-            self.train_result.setItem(len(results), 0, QtWidgets.QTableWidgetItem("선택된 모델"))
+            self.train_result.setItem(len(results), 0, QtWidgets.QTableWidgetItem("Selected Model"))
             self.train_result.setItem(len(results), 1, QtWidgets.QTableWidgetItem(selected_model))
             self.train_result.setItem(len(results), 2, QtWidgets.QTableWidgetItem(str(max_malicious_count)))
             if benign_counts:
                 max_benign_count = max(benign_counts.values())
                 self.train_result.setItem(len(results), 3, QtWidgets.QTableWidgetItem(str(max_benign_count)))
 
-    def display_confusion_matrices(self, results, Y_true):
-        if not self.confusion_matrix_result:
-            print("confusion_matrix_result 테이블을 찾을 수 없습니다.")
-            return
-
-        self.confusion_matrix_result.clear()
-        self.confusion_matrix_result.setRowCount(len(results) * 2)
-        self.confusion_matrix_result.setColumnCount(3)
-        self.confusion_matrix_result.setHorizontalHeaderLabels(['모델', '예측: 아니오', '예측: 예'])
-
-        row_idx = 0
-        for model_name, (accuracy, predictions) in results.items():
-            cm = confusion_matrix(Y_true, predictions)
-            if cm.shape == (2, 2):
-                self.confusion_matrix_result.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(f"{model_name} (실제: 아니오)"))
-                self.confusion_matrix_result.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(cm[0, 0])))
-                self.confusion_matrix_result.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(str(cm[0, 1])))
-
-                row_idx += 1
-                self.confusion_matrix_result.setItem(row_idx, 0, QtWidgets.QTableWidgetItem(f"{model_name} (실제: 예)"))
-                self.confusion_matrix_result.setItem(row_idx, 1, QtWidgets.QTableWidgetItem(str(cm[1, 0])))
-                self.confusion_matrix_result.setItem(row_idx, 2, QtWidgets.QTableWidgetItem(str(cm[1, 1])))
-                row_idx += 1
-
-    def update_vir_result(self, md5_hash, result):
+    def update_vir_result(self, hash_val, result, hash_type='MD5'):
         if not self.vir_result:
             print("vir_result 테이블을 찾을 수 없습니다.")
             return
 
         try:
             if "error" in result:
-                file_name = "오류"
-                file_type = "오류"
-                last_analysis_date = "오류"
-                analysis_summary = "오류"
-                file_url = "오류"
+                file_name = "Error"
+                file_type = "Error"
+                last_analysis_date = "Error"
+                analysis_summary = "Error"
+                file_url = "Error"
             else:
                 result_data = result.get("data", {}).get("attributes", {})
                 names = result_data.get("names", [])
-                file_name = names[0] if names else "알 수 없음"
+                file_name = names[0] if names else "Unknown"
 
-                file_type = result_data.get("type_description", "알 수 없음")
+                file_type = result_data.get("type_description", "Unknown")
                 last_analysis_date = result_data.get("last_analysis_date", "N/A")
                 analysis_stats = result_data.get("last_analysis_stats", {})
                 malicious_count = analysis_stats.get("malicious", 0)
                 harmless_count = analysis_stats.get("harmless", 0)
-                analysis_summary = f"악성: {malicious_count}, 무해: {harmless_count}"
+                analysis_summary = f"Malicious: {malicious_count}, Harmless: {harmless_count}"
 
                 file_url = result.get("data", {}).get("links", {}).get("self", "N/A")
 
-            current_row = self.vir_result.rowCount()
-            self.vir_result.insertRow(current_row)
-            self.vir_result.setItem(current_row, 0, QtWidgets.QTableWidgetItem(md5_hash))
-            self.vir_result.setItem(current_row, 1, QtWidgets.QTableWidgetItem(file_name))
-            self.vir_result.setItem(current_row, 2, QtWidgets.QTableWidgetItem(file_type))
-            self.vir_result.setItem(current_row, 3, QtWidgets.QTableWidgetItem(str(last_analysis_date)))
-            self.vir_result.setItem(current_row, 4, QtWidgets.QTableWidgetItem(analysis_summary))
-            self.vir_result.setItem(current_row, 5, QtWidgets.QTableWidgetItem(file_url))
-
         except Exception as e:
-            print(f"{md5_hash}의 결과를 파싱하는 중 오류 발생: {e}")
+            print(f"Error parsing result for {hash_val}: {e}")
+            file_name = "Error"
+            file_type = "Error"
+            last_analysis_date = "Error"
+            analysis_summary = "Error"
+            file_url = "Error"
+
+        # 기존 MD5 또는 SHA256 결과를 업데이트
+        # 각 해시 타입별로 별도의 열을 업데이트
+
+        # 먼저, 현재 테이블의 모든 행을 확인하여 이미 존재하는 MD5 또는 SHA256인지 확인
+        row_found = False
+        for row in range(self.vir_result.rowCount()):
+            existing_md5_item = self.vir_result.item(row, 0)
+            existing_sha256_item = self.vir_result.item(row, 1)
+            existing_md5 = existing_md5_item.text() if existing_md5_item else ""
+            existing_sha256 = existing_sha256_item.text() if existing_sha256_item else ""
+            if (hash_type == 'MD5' and existing_md5 == hash_val) or (hash_type == 'sha256' and existing_sha256 == hash_val):
+                # 이미 존재하는 해시의 경우 업데이트
+                self.vir_result.setItem(row, 2, QtWidgets.QTableWidgetItem(file_name))
+                self.vir_result.setItem(row, 3, QtWidgets.QTableWidgetItem(file_type))
+                self.vir_result.setItem(row, 4, QtWidgets.QTableWidgetItem(str(last_analysis_date)))
+                self.vir_result.setItem(row, 5, QtWidgets.QTableWidgetItem(analysis_summary))
+                self.vir_result.setItem(row, 6, QtWidgets.QTableWidgetItem(file_url))
+                row_found = True
+                break
+
+        if not row_found:
+            # 새로운 행 추가
             current_row = self.vir_result.rowCount()
             self.vir_result.insertRow(current_row)
-            self.vir_result.setItem(current_row, 0, QtWidgets.QTableWidgetItem(md5_hash))
-            self.vir_result.setItem(current_row, 1, QtWidgets.QTableWidgetItem("결과 파싱 오류"))
+            if hash_type == 'MD5':
+                self.vir_result.setItem(current_row, 0, QtWidgets.QTableWidgetItem(hash_val))
+                self.vir_result.setItem(current_row, 1, QtWidgets.QTableWidgetItem("N/A"))  # SHA256 미사용 시
+            elif hash_type == 'sha256':
+                self.vir_result.setItem(current_row, 0, QtWidgets.QTableWidgetItem("N/A"))  # MD5 미사용 시
+                self.vir_result.setItem(current_row, 1, QtWidgets.QTableWidgetItem(hash_val))
+            self.vir_result.setItem(current_row, 2, QtWidgets.QTableWidgetItem(file_name))
+            self.vir_result.setItem(current_row, 3, QtWidgets.QTableWidgetItem(file_type))
+            self.vir_result.setItem(current_row, 4, QtWidgets.QTableWidgetItem(str(last_analysis_date)))
+            self.vir_result.setItem(current_row, 5, QtWidgets.QTableWidgetItem(analysis_summary))
+            self.vir_result.setItem(current_row, 6, QtWidgets.QTableWidgetItem(file_url))
+            print(f"새로운 결과 추가 - {hash_type}: {hash_val}")
 
     def on_vt_thread_finished(self, message):
+        # 바이러스 토탈 검사 완료 시 상태 레이블 숨기기
+        # "VirusTotal 검사" 레이블이 제거되었으므로 관련 코드도 삭제
         if self.status_virus_total:
             self.status_virus_total.setVisible(False)
         msg_box = QMessageBox()
@@ -426,17 +361,25 @@ class MyApp(QMainWindow):
         msg_box.setWindowTitle("검사 완료")
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec_()
+        print(f"{message} 완료")
 
     def on_limit_exceeded(self):
         QMessageBox.warning(self, "요청 한도 초과", "바이러스 토탈 API 요청 한도를 초과했습니다.")
         if self.status_virus_total:
             self.status_virus_total.setVisible(False)
+        print("요청 한도 초과")
+
+    def on_invalid_api_key(self):
+        QMessageBox.critical(self, "유효하지 않은 API 키", "입력한 바이러스 토탈 API 키가 유효하지 않습니다.")
+        if self.status_virus_total:
+            self.status_virus_total.setVisible(False)
+        print("유효하지 않은 API 키")
 
 def create_file_selector():
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = MyApp()
     window.show()
-    sys.exit(app.exec_())
+    app.exec_()
 
 if __name__ == "__main__":
     create_file_selector()

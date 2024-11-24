@@ -1,7 +1,6 @@
 import requests
 import time
 
-
 class VirusTotalAPI:
     def __init__(self, api_key):
         self.api_key = api_key
@@ -55,6 +54,11 @@ class VirusTotalAPI:
                     "x-apikey": self.api_key
                 }
                 response = requests.get(url, headers=headers)
+
+                if response.status_code == 403:
+                    # 유효하지 않은 API 키
+                    print("유효하지 않은 API 키입니다 (HTTP 403).")
+                    return {"invalid_api_key": True}
 
                 if response.status_code == 429:
                     print("요청 한도를 초과했습니다 (HTTP 429). 더 이상의 요청을 중단합니다.")

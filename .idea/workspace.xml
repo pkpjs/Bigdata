@@ -5,17 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9dc4cc11-0e31-4240-9b89-fd915f72a041" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/Bigdata.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Bigdata.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-<<<<<<< HEAD
-=======
+      <change beforePath="$PROJECT_DIR$/VirusTotal_API.py" beforeDir="false" afterPath="$PROJECT_DIR$/VirusTotal_API.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plot_results.py" beforeDir="false" afterPath="$PROJECT_DIR$/plot_results.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mplwidget.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/plot_results.py" beforeDir="false" afterPath="$PROJECT_DIR$/plot_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test.ui" beforeDir="false" afterPath="$PROJECT_DIR$/test.ui" afterDir="false" />
+<<<<<<< HEAD
 <<<<<<< HEAD
 >>>>>>> 2ef9a99e7bf45e525471701ba5c288e19793937c
 =======
 >>>>>>> 7cabe64148d01a2b97cb704b179806e7a1a4d876
 >>>>>>> fc44e4afec71f75226f0f89528c359047da33988
+=======
+>>>>>>> bc3d0972ab06aec41054c10c2f44b6fadbe260ab
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -85,7 +90,7 @@
     "Python.plot_results.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "pkpjs",
+    "git-widget-placeholder": "pkpjs 병합 중",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
 =======
   <component name="PropertiesComponent">{
@@ -192,5 +197,8 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="LAST_COMMIT_MESSAGE" value="" />
   </component>
 </project>
