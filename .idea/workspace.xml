@@ -4,6 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
+<<<<<<< HEAD
     <list default="true" id="9dc4cc11-0e31-4240-9b89-fd915f72a041" name="변경" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/Bigdata.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Bigdata.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
@@ -22,6 +23,9 @@
 =======
 >>>>>>> bc3d0972ab06aec41054c10c2f44b6fadbe260ab
     </list>
+=======
+    <list default="true" id="9dc4cc11-0e31-4240-9b89-fd915f72a041" name="변경" comment="" />
+>>>>>>> origin/test
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -37,6 +41,7 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+<<<<<<< HEAD
 <<<<<<< HEAD
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -64,6 +69,8 @@
   }
 }]]></component>
 >>>>>>> fc44e4afec71f75226f0f89528c359047da33988
+=======
+>>>>>>> origin/test
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -77,6 +84,9 @@
     <option name="showLibraryContents" value="true" />
   </component>
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> origin/test
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Python.1.executor": "Run",
@@ -87,6 +97,7 @@
     "Python.data_selection.executor": "Run",
     "Python.main.executor": "Run",
     "Python.model_evaluator.executor": "Run",
+<<<<<<< HEAD
     "Python.plot_results.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -173,6 +184,18 @@
     <attachedChunks>
       <set>
         <option value="bundled-python-sdk-0e3be3396995-c546a90a8094-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.23339.19" />
+=======
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "test",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-c69650fc56ca-d3b881c8e49f-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-233.15619.17" />
+>>>>>>> origin/test
       </set>
     </attachedChunks>
   </component>
@@ -187,6 +210,7 @@
     </task>
     <servers />
   </component>
+<<<<<<< HEAD
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
@@ -201,4 +225,6 @@
   <component name="VcsManagerConfiguration">
     <option name="LAST_COMMIT_MESSAGE" value="" />
   </component>
+=======
+>>>>>>> origin/test
 </project>
