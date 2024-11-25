@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QGraphicsView
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal, QMetaObject, Qt
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QGraphicsScene
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -39,6 +38,9 @@ class GraphThread(QThread):
         self.color = color
 
     def run(self):
+        QMetaObject.invokeMethod(self, "draw_graph", Qt.QueuedConnection)
+
+    def draw_graph(self):
         # matplotlib로 그래프 그리기
         fig, ax = plt.subplots()
         ax.plot(self.x, self.y, linestyle=self.linestyle, marker=self.marker, color=self.color)
