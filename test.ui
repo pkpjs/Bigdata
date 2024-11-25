@@ -88,38 +88,11 @@
      </rect>
     </property>
     <layout class="QFormLayout" name="formLayout">
-     <!-- 파일 선택 레이아웃 -->
      <item row="0" column="0">
       <layout class="QHBoxLayout" name="horizontalLayout_fileSelection">
        <property name="spacing">
         <number>10</number>
        </property>
-       <item>
-        <widget class="QLabel" name="label_normal_file">
-         <property name="minimumSize">
-          <size>
-           <width>76</width>
-           <height>23</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>정상 PE 파일:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLineEdit" name="normal_file">
-         <property name="minimumSize">
-          <size>
-           <width>150</width>
-           <height>20</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>normal_pe (1).csv</string>
-         </property>
-        </widget>
-       </item>
        <item>
         <widget class="QLabel" name="label_malware_file">
          <property name="minimumSize">
@@ -161,8 +134,6 @@
        </item>
       </layout>
      </item>
-
-     <!-- API 키 입력 레이아웃 -->
      <item row="1" column="0">
       <layout class="QHBoxLayout" name="horizontalLayout_api_key">
        <property name="spacing">
@@ -199,8 +170,6 @@
        </item>
       </layout>
      </item>
-
-     <!-- 데이터 전처리 및 모델 학습 상태 레이아웃 -->
      <item row="2" column="0">
       <layout class="QVBoxLayout" name="verticalLayout_processingStatus">
        <property name="spacing">
@@ -280,8 +249,6 @@
        </item>
       </layout>
      </item>
-
-     <!-- 분석 시작 버튼 -->
      <item row="3" column="0">
       <widget class="QPushButton" name="train_button">
        <property name="minimumSize">

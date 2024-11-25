@@ -2,6 +2,13 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QGraphicsScene
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.pyplot as plt
+from matplotlib import font_manager, rc
+
+# 한글 폰트 설정
+font_path = "C:/Windows/Fonts/malgun.ttf"  # Windows: 맑은 고딕
+font = font_manager.FontProperties(fname=font_path).get_name()
+rc('font', family=font)
+plt.rcParams['axes.unicode_minus'] = False  # 음수 기호가 깨지지 않도록 설정
 
 def plot_graph(view, x, y, title='Graph', xlabel='X-axis', ylabel='Y-axis', linestyle='-', marker='o', color='blue'):
     """

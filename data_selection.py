@@ -9,10 +9,6 @@ class MyApp(QMainWindow):
         # data_select 버튼 클릭 시 파일 선택 다이얼로그 연결
         self.data_select.clicked.connect(self.select_malware_file)
 
-        # 기본 정상 파일 설정
-        self.normal_file = 'normal_pe (1).csv'
-        self.nomal_file.setText(self.normal_file)  # 정상 파일 라벨에 기본값 설정
-
     def select_malware_file(self):
         # 악성 파일 선택 다이얼로그
         malware_file, _ = QFileDialog.getOpenFileName(self, "악성 데이터 파일을 선택하세요", "", "CSV Files (*.csv)")

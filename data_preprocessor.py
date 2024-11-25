@@ -16,14 +16,18 @@ class DataPreprocessor:
         return self.data
 
     def get_features_and_labels(self):
-        Y = self.data['class']
-        X = self.data.drop('class', axis=1)
+        # 숫자 열만 선택
+        numeric_data = self.data.select_dtypes(include=['number'])
+        Y = numeric_data['Type']
+        X = numeric_data.drop('Type', axis=1)
         return X, Y
 
     def remove_constant_features(self, X):
+        # 상수 열 제거
         selector = VarianceThreshold(threshold=0)
         X = selector.fit_transform(X)
         return X
+
 
 class FeatureSelector:
     def __init__(self, X, Y, k_features=50):
