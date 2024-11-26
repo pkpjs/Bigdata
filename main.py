@@ -19,6 +19,7 @@ font = font_manager.FontProperties(fname=font_path).get_name()
 rc('font', family=font)
 plt.rcParams['axes.unicode_minus'] = False  # 음수 기호가 깨지지 않도록 설정
 
+
 class GraphThread(QThread):
     graph_drawn = pyqtSignal(QImage)  # QImage를 전달하는 시그널
 
@@ -61,6 +62,7 @@ class GraphThread(QThread):
             print(f"그래프 생성 중 오류 발생: {e}")
             self.graph_drawn.emit(None)
 
+
 class TrainThread(QThread):
     training_complete = pyqtSignal(dict)
 
@@ -86,6 +88,7 @@ class TrainThread(QThread):
         except Exception as e:
             print(f"모델 학습 중 오류 발생: {e}")
             self.training_complete.emit({})
+
 
 class MyApp(QMainWindow):
     def __init__(self):
@@ -218,6 +221,25 @@ class MyApp(QMainWindow):
             if self.status_model_training:
                 self.status_model_training.setText("대기 중")
 
+    def save_training_results(self, result_data):
+        try:
+            # 저장 경로 설정
+            output_dir = "training_results"
+            os.makedirs(output_dir, exist_ok=True)
+            file_path = os.path.join(output_dir, "model_accuracies.csv")
+
+            # result_data가 딕셔너리 형태라고 가정
+            # {'SVM': 0.95, 'Random Forest': 0.96, ...}
+            # 이를 리스트의 딕셔너리 형태로 변환
+            df = pd.DataFrame(list(result_data.items()), columns=['Model', 'Accuracy'])
+
+            # CSV 파일로 저장
+            df.to_csv(file_path, index=False, encoding="utf-8-sig")
+            print(f"모델 학습 결과가 {file_path}에 저장되었습니다.")
+        except Exception as e:
+            print(f"학습 결과 저장 중 오류 발생: {e}")
+            QMessageBox.critical(self, "오류", f"학습 결과 저장 중 오류가 발생했습니다: {e}")
+
     def save_data_by_type(self, data, input_csv):
         try:
             # 출력 디렉터리 설정
@@ -243,7 +265,12 @@ class MyApp(QMainWindow):
             if not results:
                 print("훈련 결과가 비어 있습니다.")
                 QMessageBox.critical(self, "오류", "훈련 결과가 비어 있습니다.")
+                if self.status_model_training:
+                    self.status_model_training.setText("모델 학습 실패")
                 return
+
+            # 학습 결과를 CSV로 저장
+            self.save_training_results(results)
 
             # 학습 완료 후 UI 업데이트
             if not self.train_result:
@@ -273,9 +300,16 @@ class MyApp(QMainWindow):
             )
             self.graph_thread.graph_drawn.connect(self.on_graph_drawn)
             self.graph_thread.start()
+
+            # 모델 학습 상태 업데이트
+            if self.status_model_training:
+                self.status_model_training.setText("모델 학습 및 그래프 완료")
+
         except Exception as e:
             print(f"학습 결과 처리 중 오류 발생: {e}")
             QMessageBox.critical(self, "오류", f"학습 결과 처리 중 오류가 발생했습니다: {e}")
+            if self.status_model_training:
+                self.status_model_training.setText("모델 학습 완료 (오류 발생)")
 
     def on_graph_drawn(self, image):
         try:
@@ -298,11 +332,13 @@ class MyApp(QMainWindow):
             print(f"그래프 표시 중 오류 발생: {e}")
             QMessageBox.critical(self, "오류", f"그래프 표시 중 오류가 발생했습니다: {e}")
 
+
 def create_app():
     app = QApplication([])
     window = MyApp()
     window.show()
     app.exec_()
+
 
 if __name__ == "__main__":
     create_app()
