@@ -1,6 +1,6 @@
 from PyQt5 import uic, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QGraphicsView
-from PyQt5.QtCore import QThread, pyqtSignal, QMetaObject, Qt
+from PyQt5.QtCore import QThread, pyqtSignal, Qt
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QGraphicsScene
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -13,21 +13,17 @@ from data_preprocessor import DataPreprocessor, FeatureSelector
 from classifiers import Classifiers
 import os
 
-# TensorFlow 경고 메시지 제거 (선택 사항)
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-
-# 한글 폰트 설정
-font_path = "C:/Windows/Fonts/malgun.ttf"  # Windows: 맑은 고딕
+# 한글 폰트 설정 (Windows: 맑은 고딕)
+font_path = "C:/Windows/Fonts/malgun.ttf"
 font = font_manager.FontProperties(fname=font_path).get_name()
 rc('font', family=font)
 plt.rcParams['axes.unicode_minus'] = False  # 음수 기호가 깨지지 않도록 설정
 
 class GraphThread(QThread):
-    graph_drawn = pyqtSignal()
+    graph_drawn = pyqtSignal(QImage)  # QImage를 전달하는 시그널
 
-    def __init__(self, view, x, y, title='Graph', xlabel='X-axis', ylabel='Y-axis', linestyle='-', marker='o', color='blue'):
+    def __init__(self, x, y, title='Graph', xlabel='X-axis', ylabel='Y-axis', linestyle='-', marker='o', color='blue'):
         super().__init__()
-        self.view = view
         self.x = x
         self.y = y
         self.title = title
@@ -38,37 +34,58 @@ class GraphThread(QThread):
         self.color = color
 
     def run(self):
-        QMetaObject.invokeMethod(self, "draw_graph", Qt.QueuedConnection)
+        try:
+            # matplotlib로 그래프 그리기
+            fig, ax = plt.subplots()
+            ax.bar(self.x, self.y, color=self.color)
+            ax.set_title(self.title)
+            ax.set_xlabel(self.xlabel)
+            ax.set_ylabel(self.ylabel)
+            ax.set_xticklabels(self.x, rotation=45, ha='right')
+            ax.grid(True, axis='y')
 
-    def draw_graph(self):
-        # matplotlib로 그래프 그리기
-        fig, ax = plt.subplots()
-        ax.plot(self.x, self.y, linestyle=self.linestyle, marker=self.marker, color=self.color)
+            # Figure를 QImage로 변환
+            canvas = FigureCanvas(fig)
+            canvas.draw()
 
-        ax.set_title(self.title)
-        ax.set_xlabel(self.xlabel)
-        ax.set_ylabel(self.ylabel)
-        ax.grid(True)
+            width, height = fig.canvas.get_width_height()
+            buf = canvas.buffer_rgba()
+            image = QImage(buf, width, height, QImage.Format_RGBA8888)
 
-        # Figure를 QImage로 변환하여 QGraphicsView에 표시
-        canvas = FigureCanvas(fig)
-        canvas.draw()
+            # 메모리 해제
+            plt.close(fig)
 
-        # canvas 이미지를 RGBA 바이트 배열로 변환
-        width, height = canvas.get_width_height()
-        image = QImage(canvas.buffer_rgba(), width, height, QImage.Format_RGBA8888)
+            # 그래프 이미지를 시그널로 전달
+            self.graph_drawn.emit(image)
+        except Exception as e:
+            print(f"그래프 생성 중 오류 발생: {e}")
+            self.graph_drawn.emit(None)
 
-        # QPixmap으로 변환 후 QGraphicsScene에 추가
-        pixmap = QPixmap.fromImage(image)
-        scene = QGraphicsScene()
-        scene.addPixmap(pixmap)
-        self.view.setScene(scene)
+class TrainThread(QThread):
+    training_complete = pyqtSignal(dict)
 
-        # 메모리 해제
-        plt.close(fig)
+    def __init__(self, X, Y):
+        super().__init__()
+        self.X = X
+        self.Y = Y
 
-        # 그래프 그리기 완료 신호 발생
-        self.graph_drawn.emit()
+    def run(self):
+        try:
+            classifier = Classifiers(self.X, self.Y)
+            results = {}
+            for model_name, model_func in [
+                ('SVM', classifier.do_svm),
+                ('Random Forest', lambda: classifier.do_randomforest(n_estimators=200, max_depth=20)),
+                ('Naive Bayes', classifier.do_naivebayes),
+                ('DNN', lambda: classifier.do_dnn(epochs=10))
+            ]:
+                accuracy, _ = model_func()
+                results[model_name] = accuracy
+            print("모델 학습 완료")
+            self.training_complete.emit(results)
+        except Exception as e:
+            print(f"모델 학습 중 오류 발생: {e}")
+            self.training_complete.emit({})
 
 class MyApp(QMainWindow):
     def __init__(self):
@@ -91,17 +108,16 @@ class MyApp(QMainWindow):
         if self.status_model_training:
             self.status_model_training.setText("대기 중")
 
-        # 훈련 버튼 클릭 연결
+        # 버튼 클릭 연결
         if self.train_button:
             self.train_button.clicked.connect(self.handle_train)
 
-        # 데이터 선택 버튼 클릭 연결
         if self.data_select:
             self.data_select.clicked.connect(self.select_malware_file)
 
     def select_malware_file(self):
         # 파일 선택 다이얼로그
-        malware_file, _ = QFileDialog.getOpenFileName(self, "악성 데이터 파일을 선택하세요", "", "CSV Files (*.csv)")
+        malware_file, _ = QFileDialog.getOpenFileName(self, "데이터 파일을 선택하세요", "", "CSV Files (*.csv)")
         if malware_file:
             self.malware_file.setText(malware_file)
 
@@ -112,7 +128,7 @@ class MyApp(QMainWindow):
 
         malware_file = self.malware_file.text().strip()
         if not malware_file:
-            QMessageBox.critical(self, "오류", "악성코드 파일을 선택하세요.")
+            QMessageBox.critical(self, "오류", "데이터 파일을 선택하세요.")
             return
 
         try:
@@ -124,11 +140,19 @@ class MyApp(QMainWindow):
             # 데이터 전처리
             preprocessor = DataPreprocessor(pe_all)
             preprocessor.filter_na()
-            print(f"NA 제거 후 데이터 크기: {pe_all.shape}")
+            print(f"NA 제거 후 데이터 크기: {preprocessor.data.shape}")
 
-            # 필요 없는 열 제거
-            drop_columns = [col for col in ['filename', 'packer_type'] if col in pe_all.columns]
+            # 'SHA256'을 보존한 후 필요 없는 열 제거
+            if 'SHA256' in preprocessor.data.columns:
+                sha256_values = preprocessor.data['SHA256'].values
+            else:
+                sha256_values = np.array(['Unknown'] * preprocessor.data.shape[0])
+                print("경고: 'SHA256' 열이 존재하지 않습니다. 모든 샘플의 SHA256을 'Unknown'으로 설정합니다.")
+
+            # 필요 없는 열 제거 (여기서는 'SHA256'만 제거)
+            drop_columns = [col for col in ['SHA256'] if col in preprocessor.data.columns]
             preprocessor.drop_columns(drop_columns)
+            print(f"필요 없는 열 제거 후 데이터 크기: {preprocessor.data.shape}")
 
             # 숫자형 데이터만 선택
             X, Y = preprocessor.get_features_and_labels()
@@ -174,10 +198,17 @@ class MyApp(QMainWindow):
             if self.status_data_preprocessing:
                 self.status_data_preprocessing.setText("전처리 완료")
 
+            # 데이터 저장: Type별로 분리하여 CSV 파일로 저장
+            self.save_data_by_type(preprocessor.data, malware_file)
+
             # 모델 학습을 별도의 쓰레드로 처리
             self.train_thread = TrainThread(X_new, Y)
             self.train_thread.training_complete.connect(self.on_training_complete)
             self.train_thread.start()
+
+            # 모델 학습 상태 업데이트
+            if self.status_model_training:
+                self.status_model_training.setText("모델 학습 중...")
 
         except Exception as e:
             print(f"훈련 중 오류 발생: {e}")
@@ -187,71 +218,91 @@ class MyApp(QMainWindow):
             if self.status_model_training:
                 self.status_model_training.setText("대기 중")
 
-    def on_training_complete(self, results):
-        # 학습 완료 후 UI 업데이트
-        if not self.train_result:
-            print("train_result 테이블을 찾을 수 없습니다.")
-            return
-
-        self.train_result.setColumnCount(4)
-        self.train_result.setHorizontalHeaderLabels(['Model', 'Accuracy', 'Malicious Count', 'Benign Count'])
-        self.train_result.setRowCount(len(results))
-
-        for row, (model, (accuracy, predictions)) in enumerate(results.items()):
-            self.train_result.setItem(row, 0, QtWidgets.QTableWidgetItem(model))
-            self.train_result.setItem(row, 1, QtWidgets.QTableWidgetItem(f"{accuracy:.4f}"))
-            self.train_result.setItem(row, 2, QtWidgets.QTableWidgetItem(str((predictions == 1).sum())))
-            self.train_result.setItem(row, 3, QtWidgets.QTableWidgetItem(str((predictions == 0).sum())))
-
-        # 그래프 그리기 쓰레드 실행
-        model_names = list(results.keys())
-        accuracies = [result[0] for result in results.values()]
-        self.graph_thread = GraphThread(
-            view=self.graphicsView,
-            x=model_names,
-            y=accuracies,
-            title='모델 정확도 비교',
-            xlabel='모델',
-            ylabel='정확도',
-            linestyle='-',
-            marker='o'
-        )
-        self.graph_thread.graph_drawn.connect(self.on_graph_drawn)
-        self.graph_thread.start()
-
-    def on_graph_drawn(self):
-        if self.status_model_training:
-            self.status_model_training.setText("모델 학습 및 그래프 완료")
-
-class TrainThread(QThread):
-    training_complete = pyqtSignal(dict)
-
-    def __init__(self, X, Y):
-        super().__init__()
-        self.X = X
-        self.Y = Y
-
-    def run(self):
+    def save_data_by_type(self, data, input_csv):
         try:
-            classifier = Classifiers(self.X, self.Y)
-            results = {
-                'svm': classifier.do_svm(),
-                'randomforest': classifier.do_randomforest(n_estimators=200, max_depth=20),
-                'naivebayes': classifier.do_naivebayes(),
-                'dnn': classifier.do_dnn(epochs=100)  # DNN 추가
-            }
-            print("모델 학습 완료")
-            self.training_complete.emit(results)
+            # 출력 디렉터리 설정
+            output_dir = os.path.join(os.path.dirname(input_csv), 'split_by_type')
+            os.makedirs(output_dir, exist_ok=True)
+
+            # Type별 데이터 분리 및 저장
+            type_groups = data.groupby('Type')
+            for type_value, group in type_groups:
+                file_name = f"type_{type_value}.csv"
+                file_path = os.path.join(output_dir, file_name)
+                group.to_csv(file_path, index=False, encoding='utf-8-sig')
+
+            print(f"Type별로 데이터가 {output_dir}에 저장되었습니다.")
+            QMessageBox.information(self, "완료", f"Type별로 데이터가 저장되었습니다:\n{output_dir}")
+
         except Exception as e:
-            print(f"모델 학습 중 오류 발생: {e}")
+            print(f"데이터 저장 중 오류 발생: {e}")
+            QMessageBox.critical(self, "오류", f"데이터 저장 중 오류가 발생했습니다: {e}")
 
+    def on_training_complete(self, results):
+        try:
+            if not results:
+                print("훈련 결과가 비어 있습니다.")
+                QMessageBox.critical(self, "오류", "훈련 결과가 비어 있습니다.")
+                return
 
-def create_file_selector():
+            # 학습 완료 후 UI 업데이트
+            if not self.train_result:
+                print("train_result 테이블을 찾을 수 없습니다.")
+                return
+
+            self.train_result.setColumnCount(2)
+            self.train_result.setHorizontalHeaderLabels(['Model', 'Accuracy'])
+            self.train_result.setRowCount(len(results))
+
+            for row, (model, accuracy) in enumerate(results.items()):
+                self.train_result.setItem(row, 0, QtWidgets.QTableWidgetItem(model))
+                self.train_result.setItem(row, 1, QtWidgets.QTableWidgetItem(f"{accuracy:.4f}"))
+
+            # 그래프 그리기 쓰레드 실행
+            model_names = list(results.keys())
+            accuracies = list(results.values())
+            self.graph_thread = GraphThread(
+                x=model_names,
+                y=accuracies,
+                title='모델 정확도 비교',
+                xlabel='모델',
+                ylabel='정확도',
+                linestyle='-',
+                marker='o',
+                color='skyblue'
+            )
+            self.graph_thread.graph_drawn.connect(self.on_graph_drawn)
+            self.graph_thread.start()
+        except Exception as e:
+            print(f"학습 결과 처리 중 오류 발생: {e}")
+            QMessageBox.critical(self, "오류", f"학습 결과 처리 중 오류가 발생했습니다: {e}")
+
+    def on_graph_drawn(self, image):
+        try:
+            if image is None:
+                QMessageBox.critical(self, "오류", "그래프 생성 중 오류가 발생했습니다.")
+                if self.status_model_training:
+                    self.status_model_training.setText("모델 학습 완료 (그래프 생성 실패)")
+                return
+
+            # QImage를 QPixmap으로 변환 후 QGraphicsScene에 추가
+            pixmap = QPixmap.fromImage(image)
+            scene = QGraphicsScene()
+            scene.addPixmap(pixmap)
+            self.graphicsView.setScene(scene)
+
+            # 그래프 그리기 완료 상태 업데이트
+            if self.status_model_training:
+                self.status_model_training.setText("모델 학습 및 그래프 완료")
+        except Exception as e:
+            print(f"그래프 표시 중 오류 발생: {e}")
+            QMessageBox.critical(self, "오류", f"그래프 표시 중 오류가 발생했습니다: {e}")
+
+def create_app():
     app = QApplication([])
     window = MyApp()
     window.show()
     app.exec_()
 
-
 if __name__ == "__main__":
-    create_file_selector()
+    create_app()
