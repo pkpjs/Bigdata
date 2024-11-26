@@ -84,7 +84,7 @@ class TrainThread(QThread):
                 ('SVM', classifier.do_svm),
                 ('Random Forest', lambda: classifier.do_randomforest(n_estimators=200, max_depth=20)),
                 ('Naive Bayes', classifier.do_naivebayes),
-                ('DNN', lambda: classifier.do_dnn(epochs=10))
+                ('DNN', lambda: classifier.do_dnn(epochs=100))
             ]:
                 accuracy, predictions = model_func()
                 benign_count = np.sum(predictions == 0)
