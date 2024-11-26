@@ -1,0 +1,9 @@
+numpy
+pandas
+scikit-learn
+tensorflow
+keras
+matplotlib
+seaborn
+pyqt5
+pyqt5-tools

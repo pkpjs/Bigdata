@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="Black">
+<<<<<<< HEAD
+    <option name="sdkName" value="Python 3.12 (pkpjs)" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (Bigdata)" project-jdk-type="Python SDK" />
+=======
+    <option name="sdkName" value="Python 3.12 (bigdata)" />
+  </component>
+<<<<<<< HEAD
+<<<<<<< HEAD
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (Bigdata)" project-jdk-type="Python SDK" />
+=======
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12" project-jdk-type="Python SDK" />
+>>>>>>> fc44e4afec71f75226f0f89528c359047da33988
+=======
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (pythonProject7)" project-jdk-type="Python SDK" />
+>>>>>>> bc3d0972ab06aec41054c10c2f44b6fadbe260ab
+>>>>>>> 5d4ce0212289e116a9fd2233fad9c880b47e8f61
+</project>
