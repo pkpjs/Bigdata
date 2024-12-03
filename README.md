@@ -21,6 +21,11 @@
 pip install -r requirements.txt
 ```
 
+## VirusTotal APi 발급 방법
+1. 바이러스 토탈 회원가입/로그인
+2. 프로필 옆 화살표 클릭/API Key 클릭
+3. API 조회
+
 ## 사용 방법
 1. 프로그램을 실행한 후 UI에서 VirusTotal API 키를 입력하세요.
 2. `main.py` 파일을 실행하여 UI를 통해 악성코드 데이터를 선택하고, 분석을 시작하세요.
