@@ -22,6 +22,7 @@ pip install -r requirements.txt
 ```
 
 ## VirusTotal APi 발급 방법
+https://www.virustotal.com/gui/home/upload
 1. 바이러스 토탈 회원가입/로그인
 2. 프로필 옆 화살표 클릭/API Key 클릭
 3. API 조회
